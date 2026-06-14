@@ -96,6 +96,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: List[ChatMessage]
+    model: Optional[str] = "gemini-2.5-flash"
 
 @app.get("/api/info")
 def get_info():
@@ -149,17 +150,48 @@ def chat(request: ChatRequest):
 
         system_instruction = get_system_instruction()
 
-        # Call Gemini model
-        response = client.models.generate_content(
-            model='gemini-2.5-flash-lite',
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.2,
-            )
-        )
+        # Define fallback chain
+        requested_model = request.model or 'gemini-2.5-flash'
+        fallback_models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-pro']
         
-        return {"response": response.text}
+        if requested_model in fallback_models:
+            fallback_models.remove(requested_model)
+        fallback_models.insert(0, requested_model)
+        
+        response_text = None
+        model_used = None
+        last_error = None
+
+        for model_name in fallback_models:
+            try:
+                logger.info(f"Attempting to generate content using model: {model_name}...")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=0.2,
+                    )
+                )
+                response_text = response.text
+                model_used = model_name
+                logger.info(f"Successfully generated response using model: {model_used}")
+                break
+            except Exception as e:
+                err_msg = str(e)
+                logger.warning(f"Model {model_name} failed: {err_msg}")
+                last_error = e
+                # If it's a quota error, continue to next fallback model
+                if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower():
+                    continue
+                else:
+                    # Fallback for other errors too, just in case
+                    continue
+        
+        if not response_text:
+            raise last_error if last_error else Exception("All models failed to generate a response.")
+            
+        return {"response": response_text, "model_used": model_used}
     except Exception as e:
         logger.error(f"Gemini API Error: {str(e)}")
         raise HTTPException(

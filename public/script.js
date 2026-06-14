@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const clearChatBtn = document.getElementById('clear-chat-btn');
+    const modelSelectEl = document.getElementById('model-select');
 
     // App State
     let conversationHistory = [];
@@ -168,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function appendMessage(role, content) {
+    function appendMessage(role, content, modelUsed) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}-message`;
 
@@ -192,6 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Parse Markdown for assistant responses
             const rawHtml = marked.parse(content);
             textDiv.innerHTML = formatCitations(rawHtml);
+            
+            // Append model used badge if available
+            if (modelUsed) {
+                const badge = document.createElement('div');
+                badge.className = 'model-badge';
+                badge.style.fontSize = '9px';
+                badge.style.color = 'var(--text-muted)';
+                badge.style.marginTop = '8px';
+                badge.style.opacity = '0.6';
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '4px';
+                badge.innerHTML = `<i class="fa-solid fa-microchip"></i> Generated via ${modelUsed}`;
+                textDiv.appendChild(badge);
+            }
         }
 
         wrapperDiv.appendChild(nameDiv);
@@ -269,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const requestPayload = {
                 message: messageText,
                 history: conversationHistory,
+                model: modelSelectEl ? modelSelectEl.value : 'gemini-2.5-flash-lite',
                 api_key: null // Stored purely in backend now
             };
 
@@ -289,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
             
-            // Add assistant response to UI
-            appendMessage('assistant', data.response);
+            // Add assistant response to UI with model metadata
+            appendMessage('assistant', data.response, data.model_used);
 
             // Save to local conversation history
             conversationHistory.push({ role: 'user', content: messageText });
