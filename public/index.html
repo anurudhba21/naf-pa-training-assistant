@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAF PA Training Assistant</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles (Loaded from root for Vercel) -->
+    <link rel="stylesheet" href="/style.css">
+    <!-- Marked.js for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- Background Glow Blobs -->
+    <div class="glow-blob blob-1"></div>
+    <div class="glow-blob blob-2"></div>
+    <div class="glow-blob blob-3"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Panel -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>NAF Academy</h1>
+                        <span>PA Training Hub</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Info Card -->
+            <div class="card pdf-card">
+                <div class="card-title">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Training Document</span>
+                </div>
+                <div class="pdf-info-row">
+                    <span class="info-label">File:</span>
+                    <span class="info-value" id="pdf-filename">Loading...</span>
+                </div>
+                <div class="pdf-info-row">
+                    <span class="info-label">Pages:</span>
+                    <span class="info-value" id="pdf-pages">-</span>
+                </div>
+                <div class="pdf-info-row">
+                    <span class="info-label">Size:</span>
+                    <span class="info-value" id="pdf-chars">- chars</span>
+                </div>
+                <div class="status-indicator-wrapper">
+                    <span class="status-dot pulsing" id="pdf-status-dot"></span>
+                    <span id="pdf-status-text">Connecting to server...</span>
+                </div>
+            </div>
+
+            <!-- API Status Card -->
+            <div class="card settings-card">
+                <div class="card-title">
+                    <i class="fa-solid fa-server"></i>
+                    <span>Gemini API Status</span>
+                </div>
+                <p class="settings-desc">The Gemini API key is managed securely on the backend server via a <code>.env</code> file.</p>
+                <div id="key-status" class="key-status-msg">
+                    <i class="fa-solid fa-circle-info"></i> Checking API status...
+                </div>
+                <div id="api-configure-tip" class="notice-text" style="display: none; font-size: 11px; margin-top: 5px; color: var(--warning);">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Set <code>GEMINI_API_KEY</code> in the <code>.env</code> file to activate.
+                </div>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="card suggestions-card">
+                <div class="card-title">
+                    <i class="fa-regular fa-lightbulb"></i>
+                    <span>Suggested Questions</span>
+                </div>
+                <div class="suggestion-list">
+                    <button class="suggestion-btn">What is HELOC and how does it differ from a second mortgage?</button>
+                    <button class="suggestion-btn">What are the formula and thresholds for LTV and DTI?</button>
+                    <button class="suggestion-btn">What are the guidelines for dispute accounts under FHA and VA loans?</button>
+                    <button class="suggestion-btn">How many days are paystubs, credit reports, and appraisals valid for?</button>
+                    <button class="suggestion-btn">What document is required when retirement funds (401k) are used in gov loans?</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="header-info">
+                    <h2>PA Training Companion</h2>
+                    <div class="header-status">
+                        <span class="pulse-badge green"></span>
+                        <span>Exclusive Knowledge Mode</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="clear-chat-btn" class="btn btn-secondary" title="Clear Chat History">
+                        <i class="fa-solid fa-trash-can"></i> <span>Clear Chat</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Messages Container -->
+            <section class="messages-container" id="chat-messages">
+                <!-- Welcome Message -->
+                <div class="message system-message">
+                    <div class="avatar">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="message-content-wrapper">
+                        <div class="sender-name">NAF Training AI</div>
+                        <div class="message-text">
+                            <p>Hello! I am your <strong>NAF Production Assistant (PA) Training Chatbot</strong>. I am trained exclusively on your PDF notes: <code id="welcome-pdf-name">CD PA Training Notes 1.pdf</code>.</p>
+                            <p>I can help you look up loan guidelines, appraisal rules, document validities, milestones, and anything else in the training notes. I will cite the specific page numbers in my answers.</p>
+                            <div class="welcome-actions">
+                                <p class="notice-text" id="welcome-notice"><i class="fa-solid fa-shield-halved"></i> Note: Please configure the Gemini API Key in the <code>.env</code> file in your workspace.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Message Input Bar -->
+            <footer class="chat-input-area">
+                <form id="chat-form" class="input-form">
+                    <div class="textarea-wrapper">
+                        <textarea id="user-input" placeholder="Ask a question about the NAF training notes..." rows="1" required></textarea>
+                    </div>
+                    <button type="submit" id="send-btn" class="btn btn-primary btn-round" disabled>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+                <div class="footer-note">
+                    Answers are strictly bound to the CD PA Training Notes. Citations denote page numbers.
+                </div>
+            </footer>
+        </main>
+    </div>
+    <!-- Custom JavaScript (Loaded from root for Vercel) -->
+    <script src="/script.js"></script>
+</body>
+</html>
