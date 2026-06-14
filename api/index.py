@@ -151,7 +151,7 @@ def chat(request: ChatRequest):
 
         # Call Gemini model
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash-lite',
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
