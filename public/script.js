@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const requestPayload = {
                 message: messageText,
                 history: conversationHistory,
-                model: modelSelectEl ? modelSelectEl.value : 'gemini-2.5-flash-lite',
+                model: modelSelectEl ? modelSelectEl.value : 'gemini-2.5-flash',
                 api_key: null // Stored purely in backend now
             };
 
